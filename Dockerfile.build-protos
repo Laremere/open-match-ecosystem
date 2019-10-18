@@ -33,6 +33,18 @@ RUN git -C "$(go env GOPATH)"/src/github.com/golang/protobuf checkout v1.3.2
 RUN go install github.com/golang/protobuf/protoc-gen-go
 ENV GO111MODULE=on
 
+# To update, set the zip file to the latest version tag or hash.
+RUN mkdir -p /usr/include/open-match.dev/api/ /usr/include/google/api /usr/include/google/rpc
+
+RUN curl -o open-match.zip -L https://github.com/googleforgames/open-match/archive/e369ac3c0b3be1115ed1bd1499a2a60d8e52d9ee.zip
+RUN unzip open-match.zip
+RUN cp -f open-match-e369ac3c0b3be1115ed1bd1499a2a60d8e52d9ee/api/*.proto /usr/include/open-match.dev/api/
+
+RUN curl -o googleapis.zip -L https://github.com/googleapis/googleapis/archive/906335b5a958557e1070fc6f275171dc8a42b1ec.zip
+RUN unzip googleapis.zip
+RUN cp -f googleapis-906335b5a958557e1070fc6f275171dc8a42b1ec/google/api/*.proto /usr/include/google/api/
+RUN cp -f googleapis-906335b5a958557e1070fc6f275171dc8a42b1ec/google/rpc/*.proto /usr/include/google/rpc/
+
 #WORKDIR /workdir
 #RUN protoc-gen-go --version
 #RUN exit 1

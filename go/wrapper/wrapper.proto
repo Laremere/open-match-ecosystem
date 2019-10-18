@@ -1,0 +1,110 @@
+// Copyright 2019 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+package openmatchecosystem.wrapper;
+
+option go_package = "open-match.dev/open-match-ecosystem/go/wrapper";
+
+import "open-match.dev/api/messages.proto";
+import "google/rpc/status.proto";
+import "google/protobuf/any.proto";
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+message GenerateTicketRequest {
+  google.protobuf.Any from_client = 1;
+}
+
+message GenerateTicketResponse {
+  openmatch.Ticket ticket = 1;
+  bool rejected = 2;
+  google.rpc.Status error = 3;
+}
+
+service TicketGenerator {
+ rpc GenerateTicket(GenerateTicketRequest) returns (GenerateTicketResponse);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+message GetProfilesRequest {
+}
+
+message GetProfilesResponse {
+  repeated openmatch.MatchProfile profiles = 1;
+
+  // How long to use this set of profiles before querying again.
+  int64 cacheMillis = 2;
+}
+
+// Director has a list of match function and get profiles pairs, for each
+// function, get the profiles to run on that function.
+service ProfilesProvider {
+  rpc GetProfiles(GetProfilesRequest) returns (GetProfilesResponse);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+message AllocateMatchRequest {
+  openmatch.Match match = 1;
+}
+
+message AllocateMatchResponse {
+  // Even if an error occurs, all tickets in the match not present here will
+  // return to available pool.  If a ticket should recieve an error, put an
+  // error on the assignment.
+  map<string, openmatch.Assignment> ids_to_assignments = 1;
+
+  // Error when finding an Assignments for these Tickets.
+  google.rpc.Status error = 3;
+}
+
+service Allocater {
+  rpc AllocateMatch(AllocateMatchRequest) returns (AllocateMatchResponse);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+message FindMatchRequest {
+  // Data for creating a ticket from the game client. Can only be set on first request.
+  google.protobuf.Any from_client = 1;
+
+  // Request to cancel searching.  Note: Clients should wait until they have received
+  // a state of canceled before disconnecting.  They may instead receive a match found,
+  // due to finding a match before the cancelation request could be processed.
+  bool cancel = 2;
+}
+
+message FindMatchResponse {
+  enum State {
+    UNKNOWN = 0;
+    SEARCHING = 1;
+    CANCELED = 2;
+    ERRORED = 3;
+    MATCH_FOUND = 4;
+  }
+
+  State state = 1;
+
+  openmatch.Assignment assignment = 2;
+
+  google.rpc.Status error = 3;
+}
+
+service FrontDoor {
+  rpc FindMatch(stream FindMatchRequest) returns (stream FindMatchResponse);
+}
+
