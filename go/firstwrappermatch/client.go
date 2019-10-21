@@ -14,7 +14,74 @@
 
 package main
 
-import "open-match.dev/open-match-ecosystem/go/demoui"
+import (
+	"context"
+	"fmt"
+	"io"
+	"time"
+
+	"google.golang.org/grpc"
+	"open-match.dev/open-match-ecosystem/go/demoui"
+	"open-match.dev/open-match-ecosystem/go/wrapper"
+)
 
 func runClients(update demoui.SetFunc) {
+	update("Main menu (sleeping)")
+	time.Sleep(time.Second * 3)
+	update("Finding match")
+	connInfo, err := findMatch()
+	if err != nil {
+		update("Error finding match:" + err.Error())
+	} else {
+		update("Playing match on " + connInfo + " (sleeping)")
+	}
+	time.Sleep(time.Second * 5)
+}
+
+func findMatch() (string, error) {
+	//////////////////////////////////////////////////////////////////////////////
+	conn, err := grpc.Dial("om-front-door.open-match.svc.cluster.local:50520", grpc.WithInsecure())
+	if err != nil {
+		return "", fmt.Errorf("Error connecting to front door: %w", err)
+	}
+	defer conn.Close()
+	fd := wrapper.NewFrontDoorClient(conn)
+
+	//////////////////////////////////////////////////////////////////////////////
+	stream, err := fd.FindMatch(context.Background())
+	if err != nil {
+		return "", fmt.Errorf("Error starting fd.FindMatch: %w", err)
+	}
+
+	err = stream.Send(&wrapper.FindMatchRequest{})
+	if err != nil {
+		return "", fmt.Errorf("Error sending fd.FindMatch: %w", err)
+	}
+
+	var resp *wrapper.FindMatchResponse
+	for {
+		r, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return "", fmt.Errorf("Error recieved from fd.FindMatch: %w", err)
+		}
+		resp = r
+	}
+
+	//////////////////////////////////////////////////////////////////////////////
+	if resp.State != wrapper.FindMatchResponse_ASSIGNED {
+		return "", fmt.Errorf("Unexpected state from findMatch: %v", resp.State.String())
+	}
+	a := resp.Assignment
+	if a == nil {
+		return "", fmt.Errorf("Missing assignment in response from findMatch.")
+	}
+
+	if a.Error != nil {
+		return "", fmt.Errorf("Assignment from findMatch has error code %d, message: %s", a.Error.Code, a.Error.Message)
+	}
+
+	return a.Connection, nil
 }

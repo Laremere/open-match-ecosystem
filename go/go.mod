@@ -21,5 +21,7 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	github.com/stretchr/testify v1.3.0
 	golang.org/x/net v0.0.0-20190522155817-f3200d17e092
+	google.golang.org/genproto v0.0.0-20190611190212-a7e196e89fd3
+	google.golang.org/grpc v1.21.1
 	open-match.dev/open-match v0.4.1-0.20191015212835-2aee5d128d65
 )

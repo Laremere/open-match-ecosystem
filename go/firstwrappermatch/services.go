@@ -20,6 +20,8 @@ import (
 	"math/rand"
 
 	"open-match.dev/open-match-ecosystem/go/demoui"
+	"open-match.dev/open-match-ecosystem/go/wrapper"
+	"open-match.dev/open-match/pkg/pb"
 )
 
 func runServices(update demoui.SetFunc) {
@@ -40,7 +42,7 @@ func (s *services) GenerateTicket(context.Context, *wrapper.GenerateTicketReques
 	}, nil
 }
 
-func (s *services) GetProfiles(context.Context, *GetProfilesRequest) (*GetProfilesResponse, error) {
+func (s *services) GetProfiles(context.Context, *wrapper.GetProfilesRequest) (*wrapper.GetProfilesResponse, error) {
 	return &wrapper.GetProfilesResponse{
 		Profiles: []*pb.MatchProfile{
 			{
@@ -55,7 +57,7 @@ func (s *services) GetProfiles(context.Context, *GetProfilesRequest) (*GetProfil
 	}, nil
 }
 
-func (s *services) AllocateMatch(ctx context.Context, req *AllocateMatchRequest) (*AllocateMatchResponse, error) {
+func (s *services) AllocateMatch(ctx context.Context, req *wrapper.AllocateMatchRequest) (*wrapper.AllocateMatchResponse, error) {
 	assignment := &pb.Assignment{
 		Connection: fmt.Sprintf("%d.%d.%d.%d:2222", rand.Intn(256), rand.Intn(256), rand.Intn(256), rand.Intn(256)),
 	}
@@ -65,7 +67,7 @@ func (s *services) AllocateMatch(ctx context.Context, req *AllocateMatchRequest)
 	}
 
 	for _, t := range req.Match.Tickets {
-		resp[t.Id] = assignment
+		resp.IdsToAssignments[t.Id] = assignment
 	}
 
 	return resp, nil

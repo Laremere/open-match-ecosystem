@@ -93,15 +93,12 @@ message FindMatchResponse {
     UNKNOWN = 0;
     SEARCHING = 1;
     CANCELED = 2;
-    ERRORED = 3;
-    MATCH_FOUND = 4;
+    ASSIGNED = 3;
   }
 
   State state = 1;
 
   openmatch.Assignment assignment = 2;
-
-  google.rpc.Status error = 3;
 }
 
 service FrontDoor {
