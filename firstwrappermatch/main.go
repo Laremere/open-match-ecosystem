@@ -17,7 +17,7 @@ package main
 import (
 	"time"
 
-	"open-match.dev/open-match-ecosystem/go/demoui"
+	"open-match.dev/open-match-ecosystem/demoui"
 )
 
 func main() {

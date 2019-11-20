@@ -21,8 +21,8 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
-	"open-match.dev/open-match-ecosystem/go/demoui"
-	"open-match.dev/open-match-ecosystem/go/wrapper"
+	"open-match.dev/open-match-ecosystem/demoui"
+	"open-match.dev/open-match-ecosystem/wrapper"
 )
 
 func runClients(update demoui.SetFunc) {
